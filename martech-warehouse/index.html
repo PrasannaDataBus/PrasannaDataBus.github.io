@@ -183,7 +183,7 @@
       <div class="conn" aria-hidden="true"><span>→</span></div>
       <div class="col">
         <div class="col-label">Extract &amp; load</div>
-        <button class="node tall" data-id="extract"><span class="t">Python extractors</span><span class="d">1 module → 1 raw table</span><span class="d" style="margin-top:10px">Backfill · incremental · 14-day lookback · idempotent writes</span></button>
+        <button class="node tall" data-id="extract"><span class="t">Python extractors</span><span class="d">1 module → 1 raw table</span><span class="d" style="margin-top:10px">Backfill · incremental · 14/30-day lookback · idempotent writes</span></button>
       </div>
       <div class="conn" aria-hidden="true"><span>→</span></div>
       <div class="col">
@@ -233,7 +233,7 @@
     <p class="sub">These are the choices that make the platform reliable, cheap to run, observable and safe to change.</p>
     <div class="cards">
       <div class="card"><div class="n">01</div><h3>Idempotent loads</h3><p>Each load deletes the target date/account slice before inserting it. Any DAG can be re-run or backfilled without creating duplicates.</p></div>
-      <div class="card"><div class="n">02</div><h3>Rolling 14-day lookback</h3><p>Ad platforms restate conversions days after the click. Every run re-pulls the last 14 days, so attribution lag is captured automatically.</p></div>
+      <div class="card"><div class="n">02</div><h3>Rolling lookback windows</h3><p>Ad platforms restate results days after the click. Every run re-pulls the last 14 days for delivery metrics and 30 days for sales, conversions and leads, so late attribution is captured automatically.</p></div>
       <div class="card"><div class="n">03</div><h3>Views in Silver, tables in Gold</h3><p>Silver is <code>materialized='view'</code>: always fresh, zero storage. Gold is <code>materialized='table'</code>, partitioned and clustered, so Power BI never waits on heavy joins.</p></div>
       <div class="card"><div class="n">04</div><h3>Partitioning &amp; clustering</h3><p>Every table is partitioned by <code>DATE</code> and clustered by the columns analysts filter on, such as campaign and ad group. Queries scan only what they need, so cost and latency stay flat as history grows.</p></div>
       <div class="card"><div class="n">05</div><h3>Atomic transformation DAGs</h3><p>Silver, Gold and <code>dbt test</code> run as one DAG per mart. If Silver fails, Gold never runs on stale data, so dashboards can't show silent failures.</p></div>
@@ -285,15 +285,15 @@ const DATA = {
     why:'A consistent extractor pattern across platforms makes adding a new channel a repeatable task, not a new project.',
     links:[['Extraction code',T+'extract']]},
   crm:{k:'Source',t:'CRM (MySQL)',
-    what:['Conversions and sales pulled from the CRM database','Loaded alongside ad data in Bronze','Joins spend to real revenue for true ROAS, not platform-reported ROAS'],
-    why:'Platform-reported conversions overstate results. Joining CRM sales gives the business a ROAS it can trust.',
+    what:['CRM conversions and sales loaded into Bronze alongside ad data','Deliberately kept out of reporting: CRM matching covers about half of ad-driven conversions','Rich first-party attributes make it the foundation for upcoming attribution modelling'],
+    why:'Reported ROAS comes from validated conversion tracking on the ad platforms. CRM data is staged separately, so attribution can be built on first-party data without putting trusted reporting at risk.',
     links:[['CRM extractor',B+'extract/crm_conversions.py']]},
   wip:{k:'Roadmap',t:'LinkedIn Ads · TikTok Ads',
     what:['Connectors in progress, following the same one-module-per-report pattern','Will land in Bronze and flow through the existing Silver and Gold models'],
     why:'The architecture was designed so new channels plug in without changing downstream marts or dashboards.',
     links:[['Roadmap in README',WH+'#-project-roadmap--scope']]},
   extract:{k:'Extract & load',t:'Python extractors',
-    what:['3-year historical backfill for YoY and YTD analysis','Daily incremental loads with a 14-day rolling lookback for attribution lag','Idempotent writes: DELETE by date/account, then INSERT','Tables partitioned by DATE and clustered by the columns analysts filter on','Dedicated repair job to reconcile load discrepancies'],
+    what:['3-year historical backfill for YoY and YTD analysis','Daily incremental loads with rolling lookbacks: 14 days for delivery metrics, 30 days for sales, conversions and leads','Idempotent writes: DELETE by date/account, then INSERT','Tables partitioned by DATE and clustered by the columns analysts filter on','Dedicated repair job to reconcile load discrepancies'],
     why:'Re-runs are safe, late conversions are captured automatically, and query costs stay low as history grows.',
     links:[['Extraction code',T+'extract'],['Repair job',T+'repair']]},
   bronze:{k:'BigQuery · Bronze',t:'Raw ingestion layer',
@@ -313,8 +313,8 @@ const DATA = {
     why:'One definition of spend, revenue and ROAS across all reports means no conflicting numbers in meetings.',
     links:[['See the dashboard','#dashboard']]},
   powerbi:{k:'Consume',t:'Power BI · Ads Command Center',
-    what:['Report pages built on the semantic model, not on raw tables','Slicers for platform, event, edition, campaign, country, week, date and more','YoY and YTD comparisons on full history'],
-    why:'Marketing leadership can pace budgets and move spend to the best-performing markets from one place.',
+    what:['Report pages built on the semantic model, not on raw tables','Week-by-week performance and weeks-out curves to each event','Cut-off (pricing tier) performance, spend vs revenue and platform comparison','YoY and YTD comparisons on full history','Slicers for platform, event, edition, campaign, country, week, date and more'],
+    why:'Marketing leadership can pace budgets week by week and move spend to the best-performing markets and platforms from one place.',
     links:[['See the dashboard','#dashboard']]},
   airflow:{k:'Orchestration',t:'Apache Airflow on Docker',
     what:['45+ DAGs per environment, containerised with Docker Compose and PostgreSQL metadata','Extract DAGs load Bronze; one atomic dbt DAG per mart runs dbt debug → Silver → Gold → dbt test','Severity-based log sink, email alerts on failure, retries and configurable lookback windows'],
