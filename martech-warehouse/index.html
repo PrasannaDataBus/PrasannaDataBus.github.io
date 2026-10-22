@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GCP MarTech Analytics Warehouse · Prasanna Uthamaraj</title>
+<meta name="description" content="Interactive architecture of a medallion ELT platform on GCP: Python extractors on Apache Airflow, BigQuery Bronze/Silver/Gold with dbt, Microsoft Fabric semantic model and Power BI.">
+<meta name="author" content="Prasanna Uthamaraj">
+<meta property="og:type" content="website">
+<meta property="og:title" content="GCP MarTech Analytics Warehouse · Interactive Architecture">
+<meta property="og:description" content="Python · Apache Airflow · BigQuery · dbt · Power BI. Click any component to see the engineering decision behind it and jump to the code.">
+<meta property="og:image" content="https://prasannadatabus.github.io/martech-warehouse/og.png">
+<meta property="og:url" content="https://prasannadatabus.github.io/martech-warehouse/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B1220; --bg2:#0F1829; --card:#162033; --card2:#1A2740; --line:#2A3A55; --line2:#344054;
+    --text:#F2F4F7; --muted:#98A2B3; --dim:#667085; --accent:#84ADFF; --accent2:#2E5AAC;
+    --bronze:#C27A4A; --silver:#A3ADBF; --gold:#D4AF37; --ok:#32D583; --wip:#FDB022;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+  .grid-bg{background-image:linear-gradient(var(--bg2) 1px,transparent 1px),linear-gradient(90deg,var(--bg2) 1px,transparent 1px);background-size:32px 32px}
+
+  /* Hero */
+  header.hero{padding:72px 0 48px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:clamp(34px,5vw,56px);line-height:1.08;margin:14px 0 16px;font-weight:800;letter-spacing:-.02em}
+  .lede{font-size:clamp(16px,1.6vw,19px);color:var(--muted);max-width:760px;margin:0}
+  .stack{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 0}
+  .tag{font-size:13px;padding:5px 12px;border:1px solid var(--line2);border-radius:99px;color:#D0D5DD;background:rgba(22,32,51,.6)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:36px 0 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px}
+  .stat b{display:block;font-size:30px;font-weight:800;letter-spacing:-.02em}
+  .stat span{font-size:13.5px;color:var(--muted)}
+  .cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:15px;padding:11px 18px;border-radius:10px;border:1px solid var(--line2);color:var(--text);background:var(--card)}
+  .btn:hover{text-decoration:none;border-color:var(--accent)}
+  .btn.primary{background:var(--accent);color:#0B1220;border-color:var(--accent)}
+  .btn.primary:hover{background:#A4C2FF}
+
+  section{padding:64px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:clamp(24px,2.6vw,32px);margin:0 0 8px;letter-spacing:-.01em}
+  .sub{color:var(--muted);margin:0 0 28px;max-width:720px}
+
+  /* Architecture */
+  .arch{display:grid;grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr) 26px minmax(0,2.3fr) 26px minmax(0,1fr);align-items:stretch;gap:0}
+  .col-label{font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 10px}
+  .col{display:flex;flex-direction:column}
+  .stackv{display:flex;flex-direction:column;gap:8px;flex:1}
+  .conn{display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:18px;padding-top:22px;pointer-events:none}
+  .conn span{display:inline-block}
+  .node{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-start;text-align:left;background:var(--card);border:1px solid var(--line2);border-radius:12px;padding:12px 14px;transition:border-color .15s,transform .15s,background .15s;position:relative}
+  .node:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .node[aria-pressed="true"]{border-color:var(--accent);background:var(--card2);box-shadow:0 0 0 1px var(--accent) inset}
+  .node .t{font-weight:700;font-size:15px;display:block}
+  .node .d{font-size:12.5px;color:var(--muted);display:block;margin-top:2px}
+  .node.wip{border-style:dashed;background:transparent}
+  .node.wip .t{color:var(--muted);font-style:italic;font-weight:600}
+  .badge{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:#0B1220;background:var(--wip);border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:2px;font-style:normal}
+  .tall{flex:1;display:flex;flex-direction:column;justify-content:flex-start}
+  .bq{background:#111C30;border:1px solid var(--accent2);border-radius:16px;padding:12px;display:grid;grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr) 18px minmax(0,1fr);flex:1}
+  .bq .conn{padding-top:0;font-size:15px}
+  .layer{border-top:5px solid}
+  .layer.bronze{border-top-color:var(--bronze)} .layer.silver{border-top-color:var(--silver)} .layer.gold{border-top-color:var(--gold)}
+  .layer .cfg{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#C7D2E6;background:#0F1829;border-radius:6px;padding:5px 7px;margin-top:8px;overflow-wrap:anywhere}
+  .consume{display:flex;flex-direction:column;gap:6px;flex:1}
+  .down{text-align:center;color:var(--accent);font-size:15px;line-height:1}
+  .orch{margin-top:16px;display:grid;grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr) 26px minmax(0,2.3fr) 26px minmax(0,1fr)}
+  .orch .node{grid-column:3 / 6;background:#1A2B4C;border-color:var(--accent2)}
+  .orch .node .d{margin:0;color:#B2CCFF}
+  .orch .lab{grid-column:1 / 2;align-self:center}
+  .promo{margin-top:0;display:grid;grid-template-columns:minmax(0,1fr) 34px minmax(0,1.2fr) 34px minmax(0,1fr);gap:0}
+  .promo .conn{padding-top:0}
+  .promo .node{border-left:5px solid}
+  .promo .dev{border-left-color:#2E90FA} .promo .rel{border-left-color:#9B8AFB} .promo .prod{border-left-color:var(--ok)}
+  .legend{display:flex;gap:18px;font-size:13px;color:var(--muted);margin:0 0 18px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:26px;border-top:2px solid var(--muted);vertical-align:middle;margin-right:6px}
+  .legend i.dash{border-top-style:dashed}
+  .hint{font-size:13px;color:var(--accent)}
+
+  /* Detail panel */
+  .panel{margin-top:22px;background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:22px 24px;min-height:150px}
+  .panel .ph{color:var(--muted);display:flex;align-items:center;gap:10px;height:100%}
+  .panel h3{margin:0 0 4px;font-size:21px}
+  .panel .kicker{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  .panel .cols{display:grid;grid-template-columns:1.3fr 1fr;gap:28px;margin-top:12px}
+  .panel ul{margin:0;padding-left:18px;color:#D0D5DD}
+  .panel li{margin:4px 0}
+  .panel .why{align-self:start;background:#0F1829;border:1px solid var(--line);border-radius:12px;padding:14px 16px;color:#D0D5DD;font-size:14.5px}
+  .panel .why b{color:var(--text);display:block;margin-bottom:4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+  .panel .links{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+
+  /* Decisions */
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .card .n{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent)}
+  .card h3{margin:6px 0 8px;font-size:17px}
+  .card p{margin:0;color:var(--muted);font-size:14.5px}
+  .card code{font-size:12.5px;color:#C7D2E6;background:#0F1829;padding:1px 5px;border-radius:4px}
+
+  /* Dashboard */
+  .dash{display:grid;grid-template-columns:2fr 1fr;gap:22px;align-items:start}
+  .dash img{width:100%;border-radius:12px;border:1px solid var(--line2);display:block}
+  .pages{list-style:none;margin:0;padding:0}
+  .pages li{padding:10px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--card);font-weight:600;font-size:15px}
+  .pages li span{display:block;font-weight:400;color:var(--muted);font-size:13px}
+  .note{font-size:12.5px;color:var(--dim);margin-top:10px}
+
+  footer{padding:36px 0 48px;color:var(--dim);font-size:14px}
+  footer .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+
+  @media (max-width: 980px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .arch,.orch,.promo{grid-template-columns:1fr}
+    .conn{padding:4px 0} .conn span{transform:rotate(90deg)}
+    .orch .node{grid-column:auto}
+    .orch .lab{grid-column:auto}
+    .bq{grid-template-columns:1fr}
+    .bq .conn{padding:2px 0}
+    .panel .cols{grid-template-columns:1fr}
+    .cards{grid-template-columns:1fr 1fr}
+    .dash{grid-template-columns:1fr}
+  }
+  @media (max-width: 620px){
+    .wrap{padding:0 16px}
+    header.hero{padding:48px 0 36px}
+    .cards{grid-template-columns:1fr}
+    .stat b{font-size:24px}
+  }
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} .node{transition:none} }
+</style>
+</head>
+<body>
+
+<header class="hero grid-bg">
+  <div class="wrap">
+    <div class="eyebrow">Data Platform Engineering · Portfolio</div>
+    <h1>GCP MarTech Analytics Warehouse</h1>
+    <p class="lede">An end-to-end medallion ELT platform that turns multi-channel ad data into decision-ready analytics. Python extractors run on Apache Airflow, land data in BigQuery, and dbt shapes it through Bronze, Silver and Gold layers. A Microsoft Fabric semantic model then feeds Power BI.</p>
+    <div class="stack">
+      <span class="tag">Python</span><span class="tag">Apache Airflow</span><span class="tag">Docker</span><span class="tag">Google BigQuery</span><span class="tag">dbt Core</span><span class="tag">SQL</span><span class="tag">Microsoft Fabric</span><span class="tag">Power BI</span><span class="tag">Git</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>45+</b><span>Airflow DAGs per environment</span></div>
+      <div class="stat"><b>38+</b><span>API extraction modules</span></div>
+      <div class="stat"><b>25</b><span>dbt models across Silver &amp; Gold</span></div>
+      <div class="stat"><b>&gt;90%</b><span>dev compute saved with Slim CI</span></div>
+    </div>
+    <div class="cta">
+      <a class="btn primary" href="#architecture">Explore the architecture ↓</a>
+      <a class="btn" href="https://github.com/PrasannaDataBus/GCP-MarTech-Analytics-Warehouse-Dev" target="_blank" rel="noopener">View code on GitHub ↗</a>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="architecture">
+  <div class="wrap">
+    <h2>Interactive architecture</h2>
+    <p class="sub">Click any component to see the engineering decision behind it, and jump straight to its code.</p>
+    <div class="legend"><span><i></i>Live</span><span><i class="dash"></i>In progress</span><span class="hint">↳ Every box is clickable</span></div>
+
+    <div class="arch" role="group" aria-label="Platform architecture">
+      <div class="col">
+        <div class="col-label">Sources</div>
+        <div class="stackv">
+          <button class="node" data-id="google"><span class="t">Google Ads API</span><span class="d">gRPC SDK · 23+ modules</span></button>
+          <button class="node" data-id="meta"><span class="t">Meta Marketing API</span><span class="d">Graph SDK · 13+ modules</span></button>
+          <button class="node" data-id="crm"><span class="t">CRM (MySQL)</span><span class="d">Conversions &amp; sales</span></button>
+          <button class="node wip" data-id="wip"><span class="t">LinkedIn · TikTok</span><span class="d">Connectors in progress</span></button>
+        </div>
+      </div>
+      <div class="conn" aria-hidden="true"><span>→</span></div>
+      <div class="col">
+        <div class="col-label">Extract &amp; load</div>
+        <button class="node tall" data-id="extract"><span class="t">Python extractors</span><span class="d">1 module → 1 raw table</span><span class="d" style="margin-top:10px">Backfill · incremental · 14-day lookback · idempotent writes</span></button>
+      </div>
+      <div class="conn" aria-hidden="true"><span>→</span></div>
+      <div class="col">
+        <div class="col-label">Google BigQuery · dbt</div>
+        <div class="bq">
+          <button class="node layer bronze" data-id="bronze"><span class="t">Bronze</span><span class="d">Raw ingestion</span><span class="cfg">partition: DATE</span><span class="d" style="margin-top:10px">One table per module · source-faithful</span></button>
+          <div class="conn" aria-hidden="true"><span>→</span></div>
+          <button class="node layer silver" data-id="silver"><span class="t">Silver</span><span class="d">Staging · stg_*</span><span class="cfg">materialized='view'</span><span class="d" style="margin-top:10px">SAFE_CAST typing · snake_case · product mapping</span></button>
+          <div class="conn" aria-hidden="true"><span>→</span></div>
+          <button class="node layer gold" data-id="gold"><span class="t">Gold</span><span class="d">Business marts</span><span class="cfg">materialized='table'</span><span class="d" style="margin-top:10px">Google + Meta unified · ROAS · geo · audience</span></button>
+        </div>
+      </div>
+      <div class="conn" aria-hidden="true"><span>→</span></div>
+      <div class="col">
+        <div class="col-label">Consume</div>
+        <div class="consume">
+          <button class="node" data-id="semantic"><span class="t">Semantic model</span><span class="d">Microsoft Fabric</span></button>
+          <div class="down" aria-hidden="true">↓</div>
+          <button class="node" data-id="powerbi" style="flex:1"><span class="t">Power BI</span><span class="d">Ads Command Center</span><span class="d" style="margin-top:10px">Self-serve reporting for marketing teams</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="orch">
+      <div class="col-label lab">Orchestrate</div>
+      <button class="node" data-id="airflow"><span class="t">Apache Airflow on Docker</span><span class="d">45+ DAGs per environment · extract DAGs load Bronze · one atomic dbt DAG per mart: Silver → Gold → dbt test</span></button>
+    </div>
+
+    <div class="col-label" style="margin-top:30px">Dev → Prod promotion</div>
+    <div class="promo">
+      <button class="node dev" data-id="dev"><span class="t">Dev · build &amp; validate</span><span class="d">Manual triggers · 14-day Slim CI</span></button>
+      <div class="conn" aria-hidden="true"><span>→</span></div>
+      <button class="node rel" data-id="release"><span class="t">Git-based release</span><span class="d mono">fetch dev → merge → push prod</span></button>
+      <div class="conn" aria-hidden="true"><span>→</span></div>
+      <button class="node prod" data-id="prod"><span class="t">Prod · always-on host</span><span class="d">Daily schedule · full history · alerts</span></button>
+    </div>
+
+    <div class="panel" id="panel" aria-live="polite">
+      <div class="ph">👆 Select a component above to see what it does, the decision behind it, and a link to its code.</div>
+    </div>
+  </div>
+</section>
+
+<section id="decisions">
+  <div class="wrap">
+    <h2>Key engineering decisions</h2>
+    <p class="sub">These are the choices that make the platform reliable, cheap to run, observable and safe to change.</p>
+    <div class="cards">
+      <div class="card"><div class="n">01</div><h3>Idempotent loads</h3><p>Each load deletes the target date/account slice before inserting it. Any DAG can be re-run or backfilled without creating duplicates.</p></div>
+      <div class="card"><div class="n">02</div><h3>Rolling 14-day lookback</h3><p>Ad platforms restate conversions days after the click. Every run re-pulls the last 14 days, so attribution lag is captured automatically.</p></div>
+      <div class="card"><div class="n">03</div><h3>Views in Silver, tables in Gold</h3><p>Silver is <code>materialized='view'</code>: always fresh, zero storage. Gold is <code>materialized='table'</code>, partitioned and clustered, so Power BI never waits on heavy joins.</p></div>
+      <div class="card"><div class="n">04</div><h3>Partitioning &amp; clustering</h3><p>Every table is partitioned by <code>DATE</code> and clustered by the columns analysts filter on, such as campaign and ad group. Queries scan only what they need, so cost and latency stay flat as history grows.</p></div>
+      <div class="card"><div class="n">05</div><h3>Atomic transformation DAGs</h3><p>Silver, Gold and <code>dbt test</code> run as one DAG per mart. If Silver fails, Gold never runs on stale data, so dashboards can't show silent failures.</p></div>
+      <div class="card"><div class="n">06</div><h3>Slim CI in development</h3><p>A Jinja macro (<code>target.name == 'dev'</code>) limits dev runs to 14 days, cutting BigQuery dev compute by more than 90%. Prod processes full history.</p></div>
+      <div class="card"><div class="n">07</div><h3>Separated Dev and Prod</h3><p>Separate repositories, Airflow stacks and datasets. Changes are validated in Dev, then promoted via Git to an always-on Prod host.</p></div>
+      <div class="card"><div class="n">08</div><h3>Observability</h3><p>A severity-based log sink and email alerts on failure, with per-source recovery and traceability. Configurable lookback windows make any source replayable after an incident.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="dashboard">
+  <div class="wrap">
+    <h2>What the business sees</h2>
+    <p class="sub">One page of the Ads Command Center in Power BI, built on the Gold layer through the Fabric semantic model.</p>
+    <div class="dash">
+      <div>
+        <img src="dashboard.jpg" alt="Power BI geo performance page by country, figures masked" loading="lazy">
+        <div class="note">Geo performance page shown · figures masked for confidentiality.</div>
+      </div>
+      <ul class="pages">
+        <li>Which markets drive reach and traffic?<span>Impressions and clicks by country</span></li>
+        <li>Where is the budget going?<span>Media investment and Google vs Meta spend split by market</span></li>
+        <li>Where is engagement strongest?<span>CTR vs CPC efficiency matrix and global reach map</span></li>
+        <li>Filter by what matters<span>Platform, event, edition, campaign, country, geo target, week and date</span></li>
+      </ul>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap row">
+    <span>© 2026 Prasanna Uthamaraj. All rights reserved. Contains no credentials, PII or client data.</span>
+    <span><a href="https://github.com/PrasannaDataBus" target="_blank" rel="noopener">github.com/PrasannaDataBus</a> · <a href="https://www.linkedin.com/in/dataguyprasanna/" target="_blank" rel="noopener">LinkedIn</a></span>
+  </div>
+</footer>
+
+<script>
+const GH = 'https://github.com/PrasannaDataBus/';
+const WH = GH + 'GCP-MarTech-Analytics-Warehouse-Dev/';
+const T = WH + 'tree/HEAD/', B = WH + 'blob/HEAD/';
+const DATA = {
+  google:{k:'Source',t:'Google Ads API',
+    what:['23+ extraction modules built on the official google-ads gRPC SDK','Campaigns, keywords, search terms, geo, demographics, PMax assets, placements, budget pacing','One module per report, so each table can be loaded, re-run and debugged on its own'],
+    why:'Granular, report-level extraction gives analysts every dimension they need without re-engineering the pipeline later.',
+    links:[['Extraction code',T+'extract']]},
+  meta:{k:'Source',t:'Meta Marketing API',
+    what:['13+ modules on the Meta Marketing (Graph) API Python SDK','Performance, hourly, device, region, platform position, age & gender, creatives, conversion actions, budget pacing','Same contract as Google Ads, so both can be unified in Gold'],
+    why:'A consistent extractor pattern across platforms makes adding a new channel a repeatable task, not a new project.',
+    links:[['Extraction code',T+'extract']]},
+  crm:{k:'Source',t:'CRM (MySQL)',
+    what:['Conversions and sales pulled from the CRM database','Loaded alongside ad data in Bronze','Joins spend to real revenue for true ROAS, not platform-reported ROAS'],
+    why:'Platform-reported conversions overstate results. Joining CRM sales gives the business a ROAS it can trust.',
+    links:[['CRM extractor',B+'extract/crm_conversions.py']]},
+  wip:{k:'Roadmap',t:'LinkedIn Ads · TikTok Ads',
+    what:['Connectors in progress, following the same one-module-per-report pattern','Will land in Bronze and flow through the existing Silver and Gold models'],
+    why:'The architecture was designed so new channels plug in without changing downstream marts or dashboards.',
+    links:[['Roadmap in README',WH+'#-project-roadmap--scope']]},
+  extract:{k:'Extract & load',t:'Python extractors',
+    what:['3-year historical backfill for YoY and YTD analysis','Daily incremental loads with a 14-day rolling lookback for attribution lag','Idempotent writes: DELETE by date/account, then INSERT','Tables partitioned by DATE and clustered by the columns analysts filter on','Dedicated repair job to reconcile load discrepancies'],
+    why:'Re-runs are safe, late conversions are captured automatically, and query costs stay low as history grows.',
+    links:[['Extraction code',T+'extract'],['Repair job',T+'repair']]},
+  bronze:{k:'BigQuery · Bronze',t:'Raw ingestion layer',
+    what:['One raw table per extraction module, source-faithful schema','Partitioned by DATE, clustered by filter columns','Declared as dbt sources so lineage starts at the raw layer'],
+    why:'Keeping an untouched copy of the source means any downstream logic can be rebuilt or audited at any time.',
+    links:[['dbt source definitions',B+'transform/models/staging/src_marketing.yml']]},
+  silver:{k:'BigQuery · Silver',t:'Staging models (dbt)',
+    what:["materialized='view' with the stg_* naming convention",'SAFE_CAST typing and snake_case schema across every source','CASE logic normalises legacy naming conventions','Joins the product calendar for pricing tiers and weeks-out curves','Keeps local currency for 1:1 alignment with platform UIs'],
+    why:'Views are always fresh and cost nothing to store, while standardised schemas make cross-platform modelling trivial.',
+    links:[['Staging models',T+'transform/models/staging'],['dbt project',B+'transform/dbt_project.yml']]},
+  gold:{k:'BigQuery · Gold',t:'Business marts (dbt)',
+    what:["materialized='table', partitioned and clustered",'Google and Meta unified into shared marts','Campaign performance, ROAS/ROI, geo ROAS, demographics, conversion actions, search terms','Demographic ROAS in progress'],
+    why:'Heavy UNION ALLs and joins are computed once a day, so dashboards stay fast for every user.',
+    links:[['Mart models',T+'transform/models/marts']]},
+  semantic:{k:'Consume',t:'Semantic model (Microsoft Fabric)',
+    what:['Gold tables modelled into a governed semantic layer in Fabric OneLake','Shared measures and relationships for every report'],
+    why:'One definition of spend, revenue and ROAS across all reports means no conflicting numbers in meetings.',
+    links:[['See the dashboard','#dashboard']]},
+  powerbi:{k:'Consume',t:'Power BI · Ads Command Center',
+    what:['Report pages built on the semantic model, not on raw tables','Slicers for platform, event, edition, campaign, country, week, date and more','YoY and YTD comparisons on full history'],
+    why:'Marketing leadership can pace budgets and move spend to the best-performing markets from one place.',
+    links:[['See the dashboard','#dashboard']]},
+  airflow:{k:'Orchestration',t:'Apache Airflow on Docker',
+    what:['45+ DAGs per environment, containerised with Docker Compose and PostgreSQL metadata','Extract DAGs load Bronze; one atomic dbt DAG per mart runs dbt debug → Silver → Gold → dbt test','Severity-based log sink, email alerts on failure, retries and configurable lookback windows'],
+    why:'Coupling Silver and Gold in one DAG guarantees Gold never builds on stale or failed data.',
+    links:[['DAG definitions',T+'dags'],['Airflow-Docker-Dev',GH+'Airflow-Docker-Dev'],['Airflow-Docker-Prod',GH+'Airflow-Docker-Prod']]},
+  dev:{k:'Dev → Prod',t:'Dev environment',
+    what:['Separate repository, Airflow stack and BigQuery datasets','Manual DAG triggers for controlled testing','Slim CI macro limits dbt runs to the last 14 days'],
+    why:'Changes can be tested freely without touching production data or burning compute.',
+    links:[['Dev repository',WH],['Airflow-Docker-Dev',GH+'Airflow-Docker-Dev']]},
+  release:{k:'Dev → Prod',t:'Git-based release',
+    what:['Validated Dev code is merged into the Prod repositories','git fetch dev → git merge dev/master → git push prod master','Versioned releases with semantic commit messages'],
+    why:'Only code that has run successfully in Dev reaches production.',
+    links:[['Release guide',B+'git_devops']]},
+  prod:{k:'Dev → Prod',t:'Prod environment',
+    what:['Dedicated always-on host pulls each release','Daily schedules on full history','SMTP email alerting on failures'],
+    why:'A stable runtime separated from development keeps reporting feeds up every morning.',
+    links:[['Prod repository',GH+'GCP-MarTech-Analytics-Warehouse-Prod'],['Airflow-Docker-Prod',GH+'Airflow-Docker-Prod']]}
+};
+const panel = document.getElementById('panel');
+const nodes = document.querySelectorAll('.node');
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function show(id){
+  const d = DATA[id]; if(!d) return;
+  nodes.forEach(n=>n.setAttribute('aria-pressed', n.dataset.id===id ? 'true':'false'));
+  const links = d.links.map(([l,u])=>{
+    const ext = u.startsWith('http');
+    return `<a class="btn${ext?' primary':''}" href="${u}"${ext?' target="_blank" rel="noopener"':''}>${esc(l)} ${ext?'↗':'↓'}</a>`;
+  }).join('');
+  panel.innerHTML = `<div class="kicker">${esc(d.k)}</div><h3>${esc(d.t)}</h3>
+    <div class="cols"><ul>${d.what.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>
+    <div class="why"><b>Why it matters</b>${esc(d.why)}</div></div>
+    <div class="links">${links}</div>`;
+  panel.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'nearest'});
+}
+nodes.forEach(n=>{ n.setAttribute('aria-pressed','false'); n.addEventListener('click',()=>show(n.dataset.id)); });
+</script>
+</body>
+</html>
