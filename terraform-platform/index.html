@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>GCP Terraform Data Platform · Prasanna Uthamaraj</title>
+<meta name="description" content="Interactive architecture of a domain-driven Terraform platform on GCP: reusable modules, dynamic GitHub Actions CI/CD, FinOps governance, BigQuery and Pub/Sub.">
+<meta name="author" content="Prasanna Uthamaraj">
+<meta property="og:type" content="website">
+<meta property="og:title" content="GCP Terraform Data Platform · Interactive Architecture">
+<meta property="og:description" content="Terraform · GitHub Actions · BigQuery · Pub/Sub · FinOps. Click any component to see the engineering decision behind it and jump to the code.">
+<meta property="og:image" content="https://prasannadatabus.github.io/terraform-platform/og.png">
+<meta property="og:url" content="https://prasannadatabus.github.io/terraform-platform/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B1220; --bg2:#0F1829; --card:#162033; --card2:#1A2740; --line:#2A3A55; --line2:#344054;
+    --text:#F2F4F7; --muted:#98A2B3; --dim:#667085; --accent:#84ADFF; --accent2:#2E5AAC;
+    --bronze:#C27A4A; --silver:#A3ADBF; --gold:#D4AF37; --ok:#32D583; --wip:#FDB022;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+  .grid-bg{background-image:linear-gradient(var(--bg2) 1px,transparent 1px),linear-gradient(90deg,var(--bg2) 1px,transparent 1px);background-size:32px 32px}
+
+  /* Hero */
+  header.hero{padding:72px 0 48px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:clamp(34px,5vw,56px);line-height:1.08;margin:14px 0 16px;font-weight:800;letter-spacing:-.02em}
+  .lede{font-size:clamp(16px,1.6vw,19px);color:var(--muted);max-width:760px;margin:0}
+  .stack{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 0}
+  .tag{font-size:13px;padding:5px 12px;border:1px solid var(--line2);border-radius:99px;color:#D0D5DD;background:rgba(22,32,51,.6)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:36px 0 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px}
+  .stat b{display:block;font-size:30px;font-weight:800;letter-spacing:-.02em}
+  .stat span{font-size:13.5px;color:var(--muted)}
+  .cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:15px;padding:11px 18px;border-radius:10px;border:1px solid var(--line2);color:var(--text);background:var(--card)}
+  .btn:hover{text-decoration:none;border-color:var(--accent)}
+  .btn.primary{background:var(--accent);color:#0B1220;border-color:var(--accent)}
+  .btn.primary:hover{background:#A4C2FF}
+
+  section{padding:64px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:clamp(24px,2.6vw,32px);margin:0 0 8px;letter-spacing:-.01em}
+  .sub{color:var(--muted);margin:0 0 28px;max-width:720px}
+
+  /* Architecture */
+  .arch{display:grid;grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr) 26px minmax(0,2.3fr) 26px minmax(0,1fr);align-items:stretch;gap:0}
+  .col-label{font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 10px}
+  .col{display:flex;flex-direction:column}
+  .stackv{display:flex;flex-direction:column;gap:8px;flex:1}
+  .conn{display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:18px;padding-top:22px;pointer-events:none}
+  .conn span{display:inline-block}
+  .node{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-start;text-align:left;background:var(--card);border:1px solid var(--line2);border-radius:12px;padding:12px 14px;transition:border-color .15s,transform .15s,background .15s;position:relative}
+  .node:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .node[aria-pressed="true"]{border-color:var(--accent);background:var(--card2);box-shadow:0 0 0 1px var(--accent) inset}
+  .node .t{font-weight:700;font-size:15px;display:block}
+  .node .d{font-size:12.5px;color:var(--muted);display:block;margin-top:2px}
+  .node.wip{border-style:dashed;background:transparent}
+  .node.wip .t{color:var(--muted);font-style:italic;font-weight:600}
+  .badge{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:#0B1220;background:var(--wip);border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:2px;font-style:normal}
+  .tall{flex:1;display:flex;flex-direction:column;justify-content:flex-start}
+  .bq{background:#111C30;border:1px solid var(--accent2);border-radius:16px;padding:12px;display:grid;grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr) 18px minmax(0,1fr);flex:1}
+  .bq .conn{padding-top:0;font-size:15px}
+  .layer{border-top:5px solid}
+  .layer.bronze{border-top-color:var(--bronze)} .layer.silver{border-top-color:var(--silver)} .layer.gold{border-top-color:var(--gold)}
+  .layer .cfg{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#C7D2E6;background:#0F1829;border-radius:6px;padding:5px 7px;margin-top:8px;overflow-wrap:anywhere}
+  .consume{display:flex;flex-direction:column;gap:6px;flex:1}
+  .down{text-align:center;color:var(--accent);font-size:15px;line-height:1}
+  .orch{margin-top:16px;display:grid;grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr) 26px minmax(0,2.3fr) 26px minmax(0,1fr)}
+  .orch .node{grid-column:3 / 6;background:#1A2B4C;border-color:var(--accent2)}
+  .orch .node .d{margin:0;color:#B2CCFF}
+  .orch .lab{grid-column:1 / 2;align-self:center}
+  .promo{margin-top:0;display:grid;grid-template-columns:minmax(0,1fr) 34px minmax(0,1.2fr) 34px minmax(0,1fr);gap:0}
+  .promo .conn{padding-top:0}
+  .promo .node{border-left:5px solid}
+  .promo .dev{border-left-color:#2E90FA} .promo .rel{border-left-color:#9B8AFB} .promo .prod{border-left-color:var(--ok)}
+  .legend{display:flex;gap:18px;font-size:13px;color:var(--muted);margin:0 0 18px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:26px;border-top:2px solid var(--muted);vertical-align:middle;margin-right:6px}
+  .legend i.dash{border-top-style:dashed}
+  .hint{font-size:13px;color:var(--accent)}
+
+  /* Detail panel */
+  .panel{margin-top:22px;background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:22px 24px;min-height:150px}
+  .panel .ph{color:var(--muted);display:flex;align-items:center;gap:10px;height:100%}
+  .panel h3{margin:0 0 4px;font-size:21px}
+  .panel .kicker{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  .panel .cols{display:grid;grid-template-columns:1.3fr 1fr;gap:28px;margin-top:12px}
+  .panel ul{margin:0;padding-left:18px;color:#D0D5DD}
+  .panel li{margin:4px 0}
+  .panel .why{align-self:start;background:#0F1829;border:1px solid var(--line);border-radius:12px;padding:14px 16px;color:#D0D5DD;font-size:14.5px}
+  .panel .why b{color:var(--text);display:block;margin-bottom:4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+  .panel .links{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+
+  /* Decisions */
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .card .n{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent)}
+  .card h3{margin:6px 0 8px;font-size:17px}
+  .card p{margin:0;color:var(--muted);font-size:14.5px}
+  .card code{font-size:12.5px;color:#C7D2E6;background:#0F1829;padding:1px 5px;border-radius:4px}
+
+  /* Dashboard */
+  .dash{display:grid;grid-template-columns:2fr 1fr;gap:22px;align-items:start}
+  .dash img{width:100%;border-radius:12px;border:1px solid var(--line2);display:block}
+  .pages{list-style:none;margin:0;padding:0}
+  .pages li{padding:10px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--card);font-weight:600;font-size:15px}
+  .pages li span{display:block;font-weight:400;color:var(--muted);font-size:13px}
+  .note{font-size:12.5px;color:var(--dim);margin-top:10px}
+
+  footer{padding:36px 0 48px;color:var(--dim);font-size:14px}
+  footer .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+
+  @media (max-width: 980px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .arch,.orch,.promo{grid-template-columns:1fr}
+    .conn{padding:4px 0} .conn span{transform:rotate(90deg)}
+    .orch .node{grid-column:auto}
+    .orch .lab{grid-column:auto}
+    .bq{grid-template-columns:1fr}
+    .bq .conn{padding:2px 0}
+    .panel .cols{grid-template-columns:1fr}
+    .cards{grid-template-columns:1fr 1fr}
+    .dash{grid-template-columns:1fr}
+  }
+  @media (max-width: 620px){
+    .wrap{padding:0 16px}
+    header.hero{padding:48px 0 36px}
+    .cards{grid-template-columns:1fr}
+    .stat b{font-size:24px}
+  }
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} .node{transition:none} }
+
+  .tfarch{grid-template-columns:minmax(0,1fr) 26px minmax(0,1.1fr) 26px minmax(0,2.1fr) 26px minmax(0,1.2fr)}
+  .tfbox{background:#17142E;border:1px solid #6941C6;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .tflab{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#BDB4FE}
+  .row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+  .row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+  .gcpbox{background:#111C30;border:1px solid var(--accent2);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .gcpbox .node{flex:1}
+  .node.ci{border-left:5px solid #2E90FA} .node.cd{border-left:5px solid var(--ok)}
+  .node .cfg{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#C7D2E6;background:#0F1829;border-radius:6px;padding:5px 7px;margin-top:8px;overflow-wrap:anywhere}
+  .road{display:grid;grid-template-columns:minmax(0,1fr)}
+  .linkcard{display:block;color:inherit}
+  .node.mod .t{font-size:13.5px;font-family:'JetBrains Mono',monospace;overflow-wrap:anywhere}
+  .linkcard:hover{text-decoration:none;border-color:var(--accent)}
+  @media (max-width:980px){ .tfarch{grid-template-columns:1fr} .row3{grid-template-columns:1fr 1fr 1fr} .orch.tfarch .node{grid-column:auto!important} }
+  @media (max-width:620px){ .row2,.row3{grid-template-columns:1fr} }
+</style>
+</head>
+<body>
+<header class="hero grid-bg">
+  <div class="wrap">
+    <div class="eyebrow">Platform Engineering · Portfolio</div>
+    <h1>GCP Terraform Data Platform</h1>
+    <p class="lede">Domain-driven Infrastructure as Code that provisions governed BigQuery and streaming landing zones for every business domain. Reusable Terraform modules enforce security and FinOps standards, Cookiecutter scaffolds new domains in seconds, and a dynamic GitHub Actions matrix validates and deploys them in parallel.</p>
+    <div class="stack">
+      <span class="tag">Terraform (HCL)</span><span class="tag">GitHub Actions</span><span class="tag">Google BigQuery</span><span class="tag">Pub/Sub</span><span class="tag">Cloud Storage</span><span class="tag">IAM</span><span class="tag">Cloud Logging</span><span class="tag">Cookiecutter / Jinja2</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>16</b><span>domain stacks across dev &amp; prod</span></div>
+      <div class="stat"><b>27</b><span>governed BigQuery datasets</span></div>
+      <div class="stat"><b>2</b><span>reusable modules behind every domain</span></div>
+      <div class="stat"><b>18</b><span>merged pull requests, CI-validated</span></div>
+    </div>
+    <div class="cta">
+      <a class="btn primary" href="#architecture">Explore the architecture ↓</a>
+      <a class="btn" href="https://github.com/PrasannaDataBus/GCP-Terraform-Data-Platform" target="_blank" rel="noopener">View code on GitHub ↗</a>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="architecture">
+  <div class="wrap">
+    <h2>Interactive architecture</h2>
+    <p class="sub">Click any component to see the engineering decision behind it, and jump straight to its code.</p>
+    <div class="legend"><span><i></i>Live</span><span><i class="dash"></i>Roadmap</span><span class="hint">↳ Every box is clickable</span></div>
+
+    <div class="arch tfarch" role="group" aria-label="Platform architecture">
+      <div class="col">
+        <div class="col-label">Author</div>
+        <div class="stackv">
+          <button class="node" data-id="scaffold" style="flex:1.4"><span class="t">Cookiecutter</span><span class="d">Domain scaffolding</span><span class="d" style="margin-top:10px">Medallion or single dataset · optional streaming</span></button>
+          <button class="node" data-id="pr" style="flex:1"><span class="t">Pull request</span><span class="d">PR template · CODEOWNERS</span></button>
+        </div>
+      </div>
+      <div class="conn" aria-hidden="true"><span>→</span></div>
+      <div class="col">
+        <div class="col-label">GitHub Actions</div>
+        <div class="stackv">
+          <button class="node ci" data-id="ci" style="flex:1"><span class="t">CI · on pull request</span><span class="cfg">fmt → init -backend=false → validate</span><span class="d" style="margin-top:8px">Dynamic matrix, no cloud credentials</span></button>
+          <button class="node cd" data-id="cd" style="flex:1"><span class="t">CD · on merge</span><span class="cfg">auth → init (GCS) → apply</span><span class="d" style="margin-top:8px">Parallel deploy per domain</span></button>
+        </div>
+      </div>
+      <div class="conn" aria-hidden="true"><span>→</span></div>
+      <div class="col">
+        <div class="col-label">Terraform</div>
+        <div class="tfbox">
+          <div class="tflab">Blueprint layer · modules/</div>
+          <div class="row2">
+            <button class="node mod" data-id="modbq"><span class="t">data_<wbr>platform_<wbr>bigquery</span><span class="d">Dataset · IAM · FinOps labels · sandbox expiry · error sink</span></button>
+            <button class="node mod" data-id="modstream"><span class="t">data_<wbr>platform_<wbr>streaming</span><span class="d">Pub/Sub topic · DLQ · subscription · Dataflow SA</span></button>
+          </div>
+          <div class="down" aria-hidden="true">↓ consumed by</div>
+          <div class="tflab">Instantiation layer · domains/</div>
+          <div class="row3">
+            <button class="node" data-id="h0"><span class="t">h0 · Core</span><span class="d">Worker identities</span></button>
+            <button class="node" data-id="h1"><span class="t">h1 · GCI</span><span class="d">10 dev + 2 prod · Medallion</span></button>
+            <button class="node" data-id="h2"><span class="t">h2 · BV</span><span class="d">3 domains · single or Medallion</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="conn" aria-hidden="true"><span>→</span></div>
+      <div class="col">
+        <div class="col-label">Google Cloud</div>
+        <div class="gcpbox">
+          <button class="node" data-id="bq"><span class="t">BigQuery datasets</span><span class="d">27 · labelled &amp; classified</span></button>
+          <button class="node" data-id="iam"><span class="t">IAM</span><span class="d">Least privilege per workload</span></button>
+          <button class="node" data-id="pubsub"><span class="t">Pub/Sub + DLQ</span><span class="d">4 streaming domains</span></button>
+          <button class="node" data-id="logs"><span class="t">Log sinks</span><span class="d">severity ≥ ERROR</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="orch tfarch">
+      <div class="col-label lab">State</div>
+      <button class="node" data-id="state" style="grid-column:3 / 8"><span class="t">Remote state · Google Cloud Storage</span><span class="d">One prefix per domain stack · object versioning · native state locking</span></button>
+    </div>
+
+    <div class="col-label" style="margin-top:30px">Roadmap</div>
+    <div class="road">
+      <button class="node wip" data-id="wif"><span class="t">Keyless CD <span class="badge">ROADMAP</span></span><span class="d">Workload Identity Federation instead of a stored service-account key</span></button>
+    </div>
+
+    <div class="panel" id="panel" aria-live="polite">
+      <div class="ph">👆 Select a component above to see what it does, the decision behind it, and a link to its code.</div>
+    </div>
+  </div>
+</section>
+
+<section id="decisions">
+  <div class="wrap">
+    <h2>Key engineering decisions</h2>
+    <p class="sub">These are the choices that make the platform safe to change, cheap to run and easy to scale to new domains.</p>
+    <div class="cards">
+      <div class="card"><div class="n">01</div><h3>Modules vs domains</h3><p>Blueprints in <code>modules/</code> define how resources are built; <code>domains/</code> only passes parameters. Standards live in one place and are never copy-pasted.</p></div>
+      <div class="card"><div class="n">02</div><h3>Blast-radius isolation</h3><p>Every domain and environment has its own GCS state prefix. A change to Marketing can't touch Sales, and Dev can't touch Prod.</p></div>
+      <div class="card"><div class="n">03</div><h3>Dynamic CI/CD matrix</h3><p>A discovery job scans <code>domains/</code> at runtime and fans out one parallel job per stack. New domains are picked up with zero YAML changes.</p></div>
+      <div class="card"><div class="n">04</div><h3>Credential-free validation</h3><p>CI runs <code>fmt</code> and <code>validate</code> with <code>init -backend=false</code>, so pull requests are checked without exposing any cloud credentials to the runner.</p></div>
+      <div class="card"><div class="n">05</div><h3>FinOps by design</h3><p><code>cost_center</code> and <code>data_sensitivity</code> are mandatory, validated inputs. Sandbox datasets get a 30-day table expiry automatically, so nothing is left running up storage.</p></div>
+      <div class="card"><div class="n">06</div><h3>Observability without the bill</h3><p>Each dataset gets a log sink filtered to <code>severity &gt;= ERROR</code>. Failures are always visible, while the flood of INFO logs never adds to logging costs.</p></div>
+      <div class="card"><div class="n">07</div><h3>Fault-tolerant streaming</h3><p>Pub/Sub subscriptions route poison messages to a dead-letter queue after 5 attempts, and each domain gets its own Dataflow service account.</p></div>
+      <div class="card"><div class="n">08</div><h3>Scaffolding over copy-paste</h3><p>A Jinja2 Cookiecutter template generates new domain stacks, choosing a Medallion or single-dataset pattern and optional streaming, so every domain starts compliant.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="practices">
+  <div class="wrap">
+    <h2>Engineered like a team repository</h2>
+    <p class="sub">Built with the governance you'd expect in an enterprise platform team, not as a one-off script.</p>
+    <div class="cards">
+      <a class="card linkcard" href="https://github.com/PrasannaDataBus/GCP-Terraform-Data-Platform/pulls?q=is%3Apr+is%3Amerged" target="_blank" rel="noopener"><div class="n">PR</div><h3>18 merged pull requests</h3><p>Every change lands through a feature branch and a pull request validated by CI. ↗</p></a>
+      <a class="card linkcard" href="https://github.com/PrasannaDataBus/GCP-Terraform-Data-Platform/blob/HEAD/.github/CODEOWNERS" target="_blank" rel="noopener"><div class="n">OWN</div><h3>CODEOWNERS &amp; PR template</h3><p>Clear ownership and a consistent review checklist for every change. ↗</p></a>
+      <a class="card linkcard" href="https://github.com/PrasannaDataBus/GCP-Terraform-Data-Platform/blob/HEAD/.github/SECURITY.md" target="_blank" rel="noopener"><div class="n">SEC</div><h3>Security &amp; contribution policies</h3><p>SECURITY.md, CONTRIBUTING.md and a code of conduct. ↗</p></a>
+      <a class="card linkcard" href="https://github.com/PrasannaDataBus/GCP-Terraform-Data-Platform/blob/HEAD/chk_gcp_state_resources.md" target="_blank" rel="noopener"><div class="n">OPS</div><h3>Operational runbooks</h3><p>State, resource and FinOps audit guide plus Terraform best practices. ↗</p></a>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap row">
+    <span>© 2026 Prasanna Uthamaraj. All rights reserved.</span>
+    <span><a href="https://github.com/PrasannaDataBus" target="_blank" rel="noopener">github.com/PrasannaDataBus</a> · <a href="https://www.linkedin.com/in/dataguyprasanna/" target="_blank" rel="noopener">LinkedIn</a></span>
+  </div>
+</footer>
+
+<script>
+const R = 'https://github.com/PrasannaDataBus/GCP-Terraform-Data-Platform/';
+const T = R + 'tree/HEAD/', B = R + 'blob/HEAD/';
+const DATA = {
+  scaffold:{k:'Author',t:'Cookiecutter domain scaffolding',
+    what:['Jinja2 template prompts for environment, house prefix and domain','Chooses a Medallion (Raw + Silver) or single landing-zone pattern','Optionally injects the streaming module for real-time domains','Generates a ready-to-deploy main.tf with its own state prefix'],
+    why:'New business domains start compliant in seconds, instead of copying and editing an old folder and drifting from standards.',
+    links:[['Cookiecutter template',T+'templates/cookiecutter-gcp-domain-template']]},
+  pr:{k:'Author',t:'Pull request workflow',
+    what:['Every change on a feature/* branch','Pull request template and CODEOWNERS for consistent review','CI must validate the change before it is merged'],
+    why:'Infrastructure changes are reviewed and validated like application code, leaving a full audit trail.',
+    links:[['PR template',B+'.github/PULL_REQUEST_TEMPLATE.md'],['CODEOWNERS',B+'.github/CODEOWNERS']]},
+  ci:{k:'GitHub Actions',t:'CI · on pull request',
+    what:['Job 1 discovers every domain folder and outputs a JSON matrix','Job 2 fans out one parallel validation per domain stack','terraform fmt -check, init -backend=false and validate','Path-filtered to modules/, domains/ and workflows'],
+    why:'Validation scales automatically with every new domain and never needs cloud credentials on the runner.',
+    links:[['CI workflow',B+'.github/workflows/terraform-ci.yml']]},
+  cd:{k:'GitHub Actions',t:'CD · on merge to master',
+    what:['Same dynamic discovery job as CI','Authenticates to GCP, initialises the remote GCS backend','Applies each domain stack in parallel','Only runs when modules/ or domains/ change'],
+    why:'Merged code reaches the cloud consistently and in parallel, with no manual console steps or drift.',
+    links:[['CD workflow',B+'.github/workflows/terraform-cd.yml']]},
+  modbq:{k:'Blueprint layer',t:'data_platform_bigquery module',
+    what:['Creates the dataset with delete_contents_on_destroy disabled','Mandatory cost_center and data_sensitivity labels with input validation','30-day default table expiry when is_temp_sandbox = true','Dataset-level editor and viewer grants','Error-only Cloud Logging sink per dataset'],
+    why:'Security, FinOps and observability standards are enforced once, in code, for every dataset on the platform.',
+    links:[['Module code',T+'modules/data_platform_bigquery']]},
+  modstream:{k:'Blueprint layer',t:'data_platform_streaming module',
+    what:['Main Pub/Sub topic and a dead-letter topic','Subscription with a dead-letter policy after 5 delivery attempts','Dedicated Dataflow service account per domain','Labels for environment, cost center and domain'],
+    why:'Real-time domains get fault tolerance and isolated compute identities by default.',
+    links:[['Module code',T+'modules/data_platform_streaming']]},
+  h0:{k:'Instantiation layer',t:'h0 · Core IAM',
+    what:['Airflow and dbt worker service accounts for each house','Project-level bigquery.jobUser so workers can run queries','Dataset access is granted separately, per domain'],
+    why:'Workload identities are created once and reused, so each domain only grants the exact dataset access it needs.',
+    links:[['Core IAM stack',T+'domains/dev/h0_core_iam']]},
+  h1:{k:'Instantiation layer',t:'h1 · GCI domains',
+    what:['10 dev domains: customer, finance, HR, inventory, IT, legal, logistics, marketing, sales, supply chain','2 prod domains: marketing and sales','Medallion zones: Raw (Airflow writes, dbt reads) and Silver (dbt writes)','Streaming enabled for customer, IT and supply chain'],
+    why:'A full enterprise domain map is provisioned from the same two blueprints, with separate state for each stack.',
+    links:[['Example domain',B+'domains/dev/h1_gci_marketing/main.tf'],['Prod domains',T+'domains/prod']]},
+  h2:{k:'Instantiation layer',t:'h2 · BV domains',
+    what:['3 dev domains: inventory, marketing, sales','Inventory uses a single landing-zone pattern with streaming','Marketing and sales use the Medallion pattern'],
+    why:'Not every team needs Medallion layers. The platform supports both patterns from the same module.',
+    links:[['Single landing zone',B+'domains/dev/h2_bv_inventory/main.tf']]},
+  bq:{k:'Google Cloud',t:'BigQuery datasets',
+    what:['27 datasets: dev_raw_*, dev_silver_*, prod_raw_* and single landing zones','Every dataset labelled with cost_center, data_sensitivity and managed_by','Sensitivity classes: public, internal, pii, financial, confidential'],
+    why:'Every dataset is traceable to a budget and a data classification from day one.',
+    links:[['BigQuery module',T+'modules/data_platform_bigquery']]},
+  iam:{k:'Google Cloud',t:'IAM · least privilege',
+    what:['Airflow workers get edit access to Raw only','dbt workers read Raw and write Silver','Grants are made at dataset level, not project level'],
+    why:'A compromised or misconfigured workload can only reach the datasets it was meant to touch.',
+    links:[['Core IAM stack',T+'domains/dev/h0_core_iam']]},
+  pubsub:{k:'Google Cloud',t:'Pub/Sub streaming',
+    what:['Topic, subscription and dead-letter topic per streaming domain','4 streaming-enabled domains','Decoupled Dataflow worker identities'],
+    why:'Bad messages are quarantined instead of blocking the stream or being lost.',
+    links:[['Streaming module',T+'modules/data_platform_streaming']]},
+  logs:{k:'Google Cloud',t:'Cloud Logging sinks',
+    what:['One sink per dataset, created by the BigQuery module','Filter: resource.type = bigquery_resource AND severity >= ERROR','Unique writer identity per sink'],
+    why:'The platform team sees every failing query, without paying to store millions of routine INFO logs.',
+    links:[['Sink definition',B+'modules/data_platform_bigquery/main.tf']]},
+  state:{k:'State',t:'Remote state on Google Cloud Storage',
+    what:['Central GCS bucket with uniform bucket-level access','One state prefix per domain stack and environment','Object versioning for rollback, native locking against concurrent applies','Audit guide for state, resources and FinOps labels'],
+    why:'No local state files, no race conditions and an instant rollback path if a state file is ever damaged.',
+    links:[['State & FinOps audit guide',B+'chk_gcp_state_resources.md']]},
+  wif:{k:'Roadmap',t:'Keyless CD with Workload Identity Federation',
+    what:['Replace the stored service-account key used by CD','GitHub OIDC tokens exchanged for short-lived GCP credentials'],
+    why:'Removes long-lived secrets from the pipeline entirely.',
+    links:[['CD workflow',B+'.github/workflows/terraform-cd.yml']]}
+};
+const panel = document.getElementById('panel');
+const nodes = document.querySelectorAll('.node');
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
+function show(id){
+  const d = DATA[id]; if(!d) return;
+  nodes.forEach(n=>n.setAttribute('aria-pressed', n.dataset.id===id ? 'true':'false'));
+  const links = d.links.map(([l,u])=>`<a class="btn primary" href="${u}" target="_blank" rel="noopener">${esc(l)} ↗</a>`).join('');
+  panel.innerHTML = `<div class="kicker">${esc(d.k)}</div><h3>${esc(d.t)}</h3>
+    <div class="cols"><ul>${d.what.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>
+    <div class="why"><b>Why it matters</b>${esc(d.why)}</div></div>
+    <div class="links">${links}</div>`;
+  panel.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'nearest'});
+}
+nodes.forEach(n=>{ n.setAttribute('aria-pressed','false'); n.addEventListener('click',()=>show(n.dataset.id)); });
+</script>
+</body>
+</html>
