@@ -8,7 +8,7 @@
 <meta name="author" content="Prasanna Uthamaraj">
 <meta property="og:type" content="website">
 <meta property="og:title" content="GCP MarTech Analytics Warehouse · Interactive Architecture">
-<meta property="og:description" content="Python · Apache Airflow · BigQuery · dbt · Power BI. Click any component to see the engineering decision behind it and jump to the code.">
+<meta property="og:description" content="Built in production at Informa. Python · Apache Airflow · BigQuery · dbt · Power BI. Click any component to see the engineering decision behind it.">
 <meta property="og:image" content="https://prasannadatabus.github.io/martech-warehouse/og.png">
 <meta property="og:url" content="https://prasannadatabus.github.io/martech-warehouse/">
 <meta name="twitter:card" content="summary_large_image">
@@ -116,6 +116,16 @@
   .pages li span{display:block;font-weight:400;color:var(--muted);font-size:13px}
   .note{font-size:12.5px;color:var(--dim);margin-top:10px}
 
+  .prod-badge{display:inline-flex;align-items:center;gap:8px;margin:6px 0 18px;padding:6px 14px;border-radius:99px;font-size:13.5px;font-weight:600;color:#D1FADF;background:rgba(18,183,106,.12);border:1px solid rgba(50,213,131,.45)}
+  .prod-badge i{width:8px;height:8px;border-radius:50%;background:var(--ok);box-shadow:0 0 0 3px rgba(50,213,131,.2)}
+  dialog.walk{max-width:520px;width:calc(100% - 32px);border:1px solid var(--line2);border-radius:16px;background:var(--card);color:var(--text);padding:26px 26px 22px}
+  dialog.walk::backdrop{background:rgba(5,10,20,.72)}
+  dialog.walk h3{margin:0 0 10px;font-size:21px}
+  dialog.walk p{margin:0 0 18px;color:#D0D5DD;font-size:15px}
+  dialog.walk .row{display:flex;flex-wrap:wrap;gap:10px}
+  dialog.walk .close{position:absolute;top:12px;right:14px;background:none;border:0;color:var(--muted);font-size:22px;cursor:pointer;line-height:1}
+  dialog.walk .close:hover{color:var(--text)}
+  dialog.walk .fine{margin:16px 0 0;font-size:12.5px;color:var(--dim)}
   footer{padding:36px 0 48px;color:var(--dim);font-size:14px}
   footer .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
 
@@ -146,6 +156,7 @@
   <div class="wrap">
     <div class="eyebrow">Data Platform Engineering · Medallion ELT</div>
     <h1>GCP MarTech Analytics Warehouse</h1>
+    <div class="prod-badge"><i></i>Built in production at Informa</div>
     <p class="lede">An end-to-end medallion ELT platform that turns multi-channel ad data into decision-ready analytics. Python extractors run on Apache Airflow, land data in BigQuery, and dbt shapes it through Bronze, Silver and Gold layers. A Microsoft Fabric semantic model then feeds Power BI.</p>
     <div class="stack">
       <span class="tag">Python</span><span class="tag">Apache Airflow</span><span class="tag">Docker</span><span class="tag">Google BigQuery</span><span class="tag">dbt Core</span><span class="tag">SQL</span><span class="tag">Microsoft Fabric</span><span class="tag">Power BI</span><span class="tag">Git</span>
@@ -158,7 +169,7 @@
     </div>
     <div class="cta">
       <a class="btn primary" href="#architecture">Explore the architecture ↓</a>
-      <a class="btn" href="https://github.com/PrasannaDataBus/GCP-MarTech-Analytics-Warehouse-Dev" target="_blank" rel="noopener">View code on GitHub ↗</a>
+      <button class="btn" type="button" data-walkthrough>Request a walkthrough</button>
     </div>
   </div>
 </header>
@@ -167,7 +178,7 @@
 <section id="architecture">
   <div class="wrap">
     <h2>Interactive architecture</h2>
-    <p class="sub">Click any component to see the engineering decision behind it, and jump straight to its code.</p>
+    <p class="sub">Click any component to see what it does and the engineering decision behind it.</p>
     <div class="legend"><span><i></i>Live</span><span><i class="dash"></i>In progress</span><span class="hint">↳ Every box is clickable</span></div>
 
     <div class="arch" role="group" aria-label="Platform architecture">
@@ -266,48 +277,56 @@
 
 <footer>
   <div class="wrap row">
-    <span>© 2026 Prasanna Uthamaraj. All rights reserved. Contains no credentials, PII or client data.</span>
+    <span>Built at Informa. Architecture overview by Prasanna Uthamaraj; the source code is private and owned by Informa.</span>
     <span><a href="https://github.com/PrasannaDataBus" target="_blank" rel="noopener">github.com/PrasannaDataBus</a> · <a href="https://www.linkedin.com/in/dataguyprasanna/" target="_blank" rel="noopener">LinkedIn</a></span>
   </div>
 </footer>
 
+<dialog class="walk" id="walk" aria-labelledby="walk-title">
+  <button class="close" type="button" aria-label="Close" data-close>×</button>
+  <h3 id="walk-title">This project's code is private</h3>
+  <p>It was built in production at Informa, so the source isn't public. I'm happy to walk you through the architecture, the design decisions and the trade-offs on a call.</p>
+  <div class="row">
+    <a class="btn primary" href="mailto:prasannadatabuss@gmail.com?subject=Walkthrough%20request%3A%20GCP%20MarTech%20Analytics%20Warehouse&amp;body=Hi%20Prasanna%2C%0A%0AI%20saw%20your%20GCP%20MarTech%20Analytics%20Warehouse%20case%20study%20and%20would%20like%20a%20walkthrough.%0A%0A">✉ Email me</a>
+    <a class="btn" href="https://www.linkedin.com/in/dataguyprasanna/" target="_blank" rel="noopener">💬 Message on LinkedIn</a>
+  </div>
+  <p class="fine">Public code samples: <a href="https://github.com/PrasannaDataBus/GCP-Terraform-Data-Platform" target="_blank" rel="noopener">GCP Terraform Data Platform</a> · <a href="https://github.com/PrasannaDataBus/JobTitleTransformer" target="_blank" rel="noopener">JobTitleTransformer</a></p>
+</dialog>
+
 <script>
-const GH = 'https://github.com/PrasannaDataBus/';
-const WH = GH + 'GCP-MarTech-Analytics-Warehouse-Dev/';
-const T = WH + 'tree/HEAD/', B = WH + 'blob/HEAD/';
 const DATA = {
   google:{k:'Source',t:'Google Ads API',
     what:['23+ extraction modules built on the official google-ads gRPC SDK','Campaigns, keywords, search terms, geo, demographics, PMax assets, placements, budget pacing','One module per report, so each table can be loaded, re-run and debugged on its own'],
     why:'Granular, report-level extraction gives analysts every dimension they need without re-engineering the pipeline later.',
-    links:[['Extraction code',T+'extract']]},
+    links:[]},
   meta:{k:'Source',t:'Meta Marketing API',
     what:['13+ modules on the Meta Marketing (Graph) API Python SDK','Performance, hourly, device, region, platform position, age & gender, creatives, conversion actions, budget pacing','Same contract as Google Ads, so both can be unified in Gold'],
     why:'A consistent extractor pattern across platforms makes adding a new channel a repeatable task, not a new project.',
-    links:[['Extraction code',T+'extract']]},
+    links:[]},
   crm:{k:'Source',t:'CRM (MySQL)',
     what:['CRM conversions and sales loaded into Bronze alongside ad data','Deliberately kept out of reporting: CRM matching covers about half of ad-driven conversions','Rich first-party attributes make it the foundation for upcoming attribution modelling'],
     why:'Reported ROAS comes from validated conversion tracking on the ad platforms. CRM data is staged separately, so attribution can be built on first-party data without putting trusted reporting at risk.',
-    links:[['CRM extractor',B+'extract/crm_conversions.py']]},
+    links:[]},
   wip:{k:'Roadmap',t:'LinkedIn Ads · TikTok Ads',
     what:['Connectors in progress, following the same one-module-per-report pattern','Will land in Bronze and flow through the existing Silver and Gold models'],
     why:'The architecture was designed so new channels plug in without changing downstream marts or dashboards.',
-    links:[['Roadmap in README',WH+'#-project-roadmap--scope']]},
+    links:[]},
   extract:{k:'Extract & load',t:'Python extractors',
     what:['3-year historical backfill for YoY and YTD analysis','Daily incremental loads with rolling lookbacks: 14 days for delivery metrics, 30 days for sales, conversions and leads','Idempotent writes: DELETE by date/account, then INSERT','Tables partitioned by DATE and clustered by the columns analysts filter on','Dedicated repair job to reconcile load discrepancies'],
     why:'Re-runs are safe, late conversions are captured automatically, and query costs stay low as history grows.',
-    links:[['Extraction code',T+'extract'],['Repair job',T+'repair']]},
+    links:[]},
   bronze:{k:'BigQuery · Bronze',t:'Raw ingestion layer',
     what:['One raw table per extraction module, source-faithful schema','Partitioned by DATE, clustered by filter columns','Declared as dbt sources so lineage starts at the raw layer'],
     why:'Keeping an untouched copy of the source means any downstream logic can be rebuilt or audited at any time.',
-    links:[['dbt source definitions',B+'transform/models/staging/src_marketing.yml']]},
+    links:[]},
   silver:{k:'BigQuery · Silver',t:'Staging models (dbt)',
     what:["materialized='view' with the stg_* naming convention",'SAFE_CAST typing and snake_case schema across every source','CASE logic normalises legacy naming conventions','Joins the product calendar for pricing tiers and weeks-out curves','Keeps local currency for 1:1 alignment with platform UIs'],
     why:'Views are always fresh and cost nothing to store, while standardised schemas make cross-platform modelling trivial.',
-    links:[['Staging models',T+'transform/models/staging'],['dbt project',B+'transform/dbt_project.yml']]},
+    links:[]},
   gold:{k:'BigQuery · Gold',t:'Business marts (dbt)',
     what:["materialized='table', partitioned and clustered",'Google and Meta unified into shared marts','Campaign performance, ROAS/ROI, geo ROAS, demographics, conversion actions, search terms','Demographic ROAS in progress'],
     why:'Heavy UNION ALLs and joins are computed once a day, so dashboards stay fast for every user.',
-    links:[['Mart models',T+'transform/models/marts']]},
+    links:[]},
   semantic:{k:'Consume',t:'Semantic model (Microsoft Fabric)',
     what:['Gold tables modelled into a governed semantic layer in Fabric OneLake','Shared measures and relationships for every report'],
     why:'One definition of spend, revenue and ROAS across all reports means no conflicting numbers in meetings.',
@@ -319,19 +338,19 @@ const DATA = {
   airflow:{k:'Orchestration',t:'Apache Airflow on Docker',
     what:['45+ DAGs per environment, containerised with Docker Compose and PostgreSQL metadata','Extract DAGs load Bronze; one atomic dbt DAG per mart runs dbt debug → Silver → Gold → dbt test','Severity-based log sink, email alerts on failure, retries and configurable lookback windows'],
     why:'Coupling Silver and Gold in one DAG guarantees Gold never builds on stale or failed data.',
-    links:[['DAG definitions',T+'dags'],['Airflow-Docker-Dev',GH+'Airflow-Docker-Dev'],['Airflow-Docker-Prod',GH+'Airflow-Docker-Prod']]},
+    links:[]},
   dev:{k:'Dev → Prod',t:'Dev environment',
     what:['Separate repository, Airflow stack and BigQuery datasets','Manual DAG triggers for controlled testing','Slim CI macro limits dbt runs to the last 14 days'],
     why:'Changes can be tested freely without touching production data or burning compute.',
-    links:[['Dev repository',WH],['Airflow-Docker-Dev',GH+'Airflow-Docker-Dev']]},
+    links:[]},
   release:{k:'Dev → Prod',t:'Git-based release',
     what:['Validated Dev code is merged into the Prod repositories','git fetch dev → git merge dev/master → git push prod master','Versioned releases with semantic commit messages'],
     why:'Only code that has run successfully in Dev reaches production.',
-    links:[['Release guide',B+'git_devops']]},
+    links:[]},
   prod:{k:'Dev → Prod',t:'Prod environment',
     what:['Dedicated always-on host pulls each release','Daily schedules on full history','SMTP email alerting on failures'],
     why:'A stable runtime separated from development keeps reporting feeds up every morning.',
-    links:[['Prod repository',GH+'GCP-MarTech-Analytics-Warehouse-Prod'],['Airflow-Docker-Prod',GH+'Airflow-Docker-Prod']]}
+    links:[]}
 };
 const panel = document.getElementById('panel');
 const nodes = document.querySelectorAll('.node');
@@ -339,10 +358,8 @@ function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;')}
 function show(id){
   const d = DATA[id]; if(!d) return;
   nodes.forEach(n=>n.setAttribute('aria-pressed', n.dataset.id===id ? 'true':'false'));
-  const links = d.links.map(([l,u])=>{
-    const ext = u.startsWith('http');
-    return `<a class="btn${ext?' primary':''}" href="${u}"${ext?' target="_blank" rel="noopener"':''}>${esc(l)} ${ext?'↗':'↓'}</a>`;
-  }).join('');
+  const links = '<button class="btn primary" type="button" data-walkthrough>Request a walkthrough</button>' +
+    d.links.map(([l,u])=>`<a class="btn" href="${u}">${esc(l)} ↓</a>`).join('');
   panel.innerHTML = `<div class="kicker">${esc(d.k)}</div><h3>${esc(d.t)}</h3>
     <div class="cols"><ul>${d.what.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>
     <div class="why"><b>Why it matters</b>${esc(d.why)}</div></div>
@@ -350,6 +367,11 @@ function show(id){
   panel.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'nearest'});
 }
 nodes.forEach(n=>{ n.setAttribute('aria-pressed','false'); n.addEventListener('click',()=>show(n.dataset.id)); });
+const walk = document.getElementById('walk');
+document.addEventListener('click', e=>{
+  if (e.target.closest('[data-walkthrough]')) { walk.showModal(); }
+  else if (e.target.closest('[data-close]') || e.target === walk) { walk.close(); }
+});
 </script>
 </body>
 </html>
