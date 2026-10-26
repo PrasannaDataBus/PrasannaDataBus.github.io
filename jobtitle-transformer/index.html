@@ -1,0 +1,394 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JobTitleTransformer · Prasanna Uthamaraj</title>
+<meta name="description" content="Interactive pipeline of JobTitleTransformer, a Python library on PyPI that normalises messy, multilingual healthcare job titles with regex rules, Sentence-BERT and FAISS.">
+<meta name="author" content="Prasanna Uthamaraj">
+<meta property="og:type" content="website">
+<meta property="og:title" content="JobTitleTransformer · Interactive Pipeline">
+<meta property="og:description" content="Python library on PyPI: 95 categories, ~4,000 regex patterns, SBERT + FAISS fallback and explainable output. 52 tests on Python 3.9–3.13.">
+<meta property="og:image" content="https://prasannadatabus.github.io/jobtitletransformer/og.png">
+<meta property="og:url" content="https://prasannadatabus.github.io/jobtitletransformer/">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0B1220; --bg2:#0F1829; --card:#162033; --card2:#1A2740; --line:#2A3A55; --line2:#344054;
+    --text:#F2F4F7; --muted:#98A2B3; --dim:#667085; --accent:#84ADFF; --accent2:#2E5AAC;
+    --bronze:#C27A4A; --silver:#A3ADBF; --gold:#D4AF37; --ok:#32D583; --wip:#FDB022;
+  }
+  *{box-sizing:border-box}
+  html{scroll-behavior:smooth}
+  body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,sans-serif;line-height:1.55;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code,.mono{font-family:'JetBrains Mono',ui-monospace,monospace}
+  .wrap{max-width:1180px;margin:0 auto;padding:0 24px}
+  .grid-bg{background-image:linear-gradient(var(--bg2) 1px,transparent 1px),linear-gradient(90deg,var(--bg2) 1px,transparent 1px);background-size:32px 32px}
+
+  /* Hero */
+  header.hero{padding:72px 0 48px;border-bottom:1px solid var(--line)}
+  .eyebrow{font-size:13px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--accent)}
+  h1{font-size:clamp(34px,5vw,56px);line-height:1.08;margin:14px 0 16px;font-weight:800;letter-spacing:-.02em}
+  .lede{font-size:clamp(16px,1.6vw,19px);color:var(--muted);max-width:760px;margin:0}
+  .stack{display:flex;flex-wrap:wrap;gap:8px;margin:22px 0 0}
+  .tag{font-size:13px;padding:5px 12px;border:1px solid var(--line2);border-radius:99px;color:#D0D5DD;background:rgba(22,32,51,.6)}
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin:36px 0 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px}
+  .stat b{display:block;font-size:30px;font-weight:800;letter-spacing:-.02em}
+  .stat span{font-size:13.5px;color:var(--muted)}
+  .cta{display:flex;flex-wrap:wrap;gap:10px;margin-top:28px}
+  .btn{display:inline-flex;align-items:center;gap:8px;font-weight:600;font-size:15px;padding:11px 18px;border-radius:10px;border:1px solid var(--line2);color:var(--text);background:var(--card)}
+  .btn:hover{text-decoration:none;border-color:var(--accent)}
+  .btn.primary{background:var(--accent);color:#0B1220;border-color:var(--accent)}
+  .btn.primary:hover{background:#A4C2FF}
+
+  section{padding:64px 0;border-bottom:1px solid var(--line)}
+  h2{font-size:clamp(24px,2.6vw,32px);margin:0 0 8px;letter-spacing:-.01em}
+  .sub{color:var(--muted);margin:0 0 28px;max-width:720px}
+
+  /* Architecture */
+  .arch{display:grid;grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr) 26px minmax(0,2.3fr) 26px minmax(0,1fr);align-items:stretch;gap:0}
+  .col-label{font-size:11.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--accent);margin:0 0 10px}
+  .col{display:flex;flex-direction:column}
+  .stackv{display:flex;flex-direction:column;gap:8px;flex:1}
+  .conn{display:flex;align-items:center;justify-content:center;color:var(--accent);font-size:18px;padding-top:22px;pointer-events:none}
+  .conn span{display:inline-block}
+  .node{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;justify-content:flex-start;text-align:left;background:var(--card);border:1px solid var(--line2);border-radius:12px;padding:12px 14px;transition:border-color .15s,transform .15s,background .15s;position:relative}
+  .node:hover{border-color:var(--accent);transform:translateY(-1px)}
+  .node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+  .node[aria-pressed="true"]{border-color:var(--accent);background:var(--card2);box-shadow:0 0 0 1px var(--accent) inset}
+  .node .t{font-weight:700;font-size:15px;display:block}
+  .node .d{font-size:12.5px;color:var(--muted);display:block;margin-top:2px}
+  .node.wip{border-style:dashed;background:transparent}
+  .node.wip .t{color:var(--muted);font-style:italic;font-weight:600}
+  .badge{font-size:10.5px;font-weight:700;letter-spacing:.06em;color:#0B1220;background:var(--wip);border-radius:99px;padding:2px 7px;margin-left:6px;vertical-align:2px;font-style:normal}
+  .tall{flex:1;display:flex;flex-direction:column;justify-content:flex-start}
+  .bq{background:#111C30;border:1px solid var(--accent2);border-radius:16px;padding:12px;display:grid;grid-template-columns:minmax(0,1fr) 18px minmax(0,1fr) 18px minmax(0,1fr);flex:1}
+  .bq .conn{padding-top:0;font-size:15px}
+  .layer{border-top:5px solid}
+  .layer.bronze{border-top-color:var(--bronze)} .layer.silver{border-top-color:var(--silver)} .layer.gold{border-top-color:var(--gold)}
+  .layer .cfg{display:block;font-family:'JetBrains Mono',monospace;font-size:10.5px;color:#C7D2E6;background:#0F1829;border-radius:6px;padding:5px 7px;margin-top:8px;overflow-wrap:anywhere}
+  .consume{display:flex;flex-direction:column;gap:6px;flex:1}
+  .down{text-align:center;color:var(--accent);font-size:15px;line-height:1}
+  .orch{margin-top:16px;display:grid;grid-template-columns:minmax(0,1fr) 26px minmax(0,1fr) 26px minmax(0,2.3fr) 26px minmax(0,1fr)}
+  .orch .node{grid-column:3 / 6;background:#1A2B4C;border-color:var(--accent2)}
+  .orch .node .d{margin:0;color:#B2CCFF}
+  .orch .lab{grid-column:1 / 2;align-self:center}
+  .promo{margin-top:0;display:grid;grid-template-columns:minmax(0,1fr) 34px minmax(0,1.2fr) 34px minmax(0,1fr);gap:0}
+  .promo .conn{padding-top:0}
+  .promo .node{border-left:5px solid}
+  .promo .dev{border-left-color:#2E90FA} .promo .rel{border-left-color:#9B8AFB} .promo .prod{border-left-color:var(--ok)}
+  .legend{display:flex;gap:18px;font-size:13px;color:var(--muted);margin:0 0 18px;flex-wrap:wrap}
+  .legend i{display:inline-block;width:26px;border-top:2px solid var(--muted);vertical-align:middle;margin-right:6px}
+  .legend i.dash{border-top-style:dashed}
+  .hint{font-size:13px;color:var(--accent)}
+
+  /* Detail panel */
+  .panel{margin-top:22px;background:var(--card);border:1px solid var(--line2);border-radius:16px;padding:22px 24px;min-height:150px}
+  .panel .ph{color:var(--muted);display:flex;align-items:center;gap:10px;height:100%}
+  .panel h3{margin:0 0 4px;font-size:21px}
+  .panel .kicker{font-size:12px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--accent)}
+  .panel .cols{display:grid;grid-template-columns:1.3fr 1fr;gap:28px;margin-top:12px}
+  .panel ul{margin:0;padding-left:18px;color:#D0D5DD}
+  .panel li{margin:4px 0}
+  .panel .why{align-self:start;background:#0F1829;border:1px solid var(--line);border-radius:12px;padding:14px 16px;color:#D0D5DD;font-size:14.5px}
+  .panel .why b{color:var(--text);display:block;margin-bottom:4px;font-size:13px;letter-spacing:.06em;text-transform:uppercase}
+  .panel .links{display:flex;flex-wrap:wrap;gap:8px;margin-top:16px}
+
+  /* Decisions */
+  .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:20px}
+  .card .n{font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--accent)}
+  .card h3{margin:6px 0 8px;font-size:17px}
+  .card p{margin:0;color:var(--muted);font-size:14.5px}
+  .card code{font-size:12.5px;color:#C7D2E6;background:#0F1829;padding:1px 5px;border-radius:4px}
+
+  /* Dashboard */
+  .dash{display:grid;grid-template-columns:2fr 1fr;gap:22px;align-items:start}
+  .dash img{width:100%;border-radius:12px;border:1px solid var(--line2);display:block}
+  .pages{list-style:none;margin:0;padding:0}
+  .pages li{padding:10px 14px;border:1px solid var(--line);border-radius:10px;margin-bottom:8px;background:var(--card);font-weight:600;font-size:15px}
+  .pages li span{display:block;font-weight:400;color:var(--muted);font-size:13px}
+  .note{font-size:12.5px;color:var(--dim);margin-top:10px}
+
+  footer{padding:36px 0 48px;color:var(--dim);font-size:14px}
+  footer .row{display:flex;flex-wrap:wrap;justify-content:space-between;gap:12px}
+
+  @media (max-width: 980px){
+    .stats{grid-template-columns:repeat(2,1fr)}
+    .arch,.orch,.promo{grid-template-columns:1fr}
+    .conn{padding:4px 0} .conn span{transform:rotate(90deg)}
+    .orch .node{grid-column:auto}
+    .orch .lab{grid-column:auto}
+    .bq{grid-template-columns:1fr}
+    .bq .conn{padding:2px 0}
+    .panel .cols{grid-template-columns:1fr}
+    .cards{grid-template-columns:1fr 1fr}
+    .dash{grid-template-columns:1fr}
+  }
+  @media (max-width: 620px){
+    .wrap{padding:0 16px}
+    header.hero{padding:48px 0 36px}
+    .cards{grid-template-columns:1fr}
+    .stat b{font-size:24px}
+  }
+  @media (prefers-reduced-motion: reduce){ html{scroll-behavior:auto} .node{transition:none} }
+
+  .jarch{grid-template-columns:minmax(0,1fr) 26px minmax(0,1.1fr) 26px minmax(0,2fr) 26px minmax(0,1.1fr) 26px minmax(0,1.1fr)}
+  .tfbox{background:#17142E;border:1px solid #6941C6;border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .row2{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;flex:1}
+  .row3{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+  .gcpbox{background:#111C30;border:1px solid var(--accent2);border-radius:16px;padding:12px;display:flex;flex-direction:column;gap:8px;flex:1}
+  .gcpbox .node{flex:1}
+  .node .cfg{display:block;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.7;color:#C7D2E6;background:#0F1829;border-radius:6px;padding:7px 9px;margin-top:10px;overflow-wrap:anywhere}
+  .node.rev{border-left:5px solid #F79009} .node.gate{border-left:5px solid var(--ok)}
+  .ex{border:1px solid var(--line2);border-radius:14px;overflow:hidden}
+  .exh,.exr{display:grid;grid-template-columns:1.3fr 1.3fr .8fr;gap:14px;padding:11px 18px;align-items:center}
+  .exh{background:var(--card2);font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--accent)}
+  .exr{border-top:1px solid var(--line);font-size:15px}
+  .exr:nth-child(odd){background:rgba(22,32,51,.5)}
+  .exr code{font-family:'JetBrains Mono',monospace;font-size:13.5px;color:#C7D2E6;overflow-wrap:anywhere}
+  .exr b{color:var(--text)} .exr b.muted{color:var(--muted);font-weight:500;font-style:italic}
+  .exr span{color:var(--muted);font-size:13.5px}
+  .codeblock{background:#0F1829;border:1px solid var(--line2);border-radius:14px;padding:20px 22px;overflow-x:auto;margin:0}
+  .codeblock code{font-family:'JetBrains Mono',monospace;font-size:14px;line-height:1.7;color:#C7D2E6;white-space:pre}
+  #quickstart .note{color:var(--muted);font-size:14px;margin-top:12px}
+  #quickstart .sub code{font-family:'JetBrains Mono',monospace;color:#C7D2E6;background:#0F1829;padding:1px 6px;border-radius:4px}
+  @media (max-width:980px){ .jarch{grid-template-columns:1fr} .orch.jarch .node{grid-column:auto!important} .row3.eng{grid-template-columns:1fr} }
+  @media (max-width:620px){ .row2{grid-template-columns:1fr} .exh,.exr{grid-template-columns:1fr 1fr} .exh span:last-child,.exr span{display:none} }
+</style>
+</head>
+<body>
+<header class="hero grid-bg">
+  <div class="wrap">
+    <div class="eyebrow">Python Library · NLP Data Quality</div>
+    <h1>JobTitleTransformer</h1>
+    <p class="lede">A hybrid NLP pipeline that turns messy, multilingual healthcare job titles into one clean, standard taxonomy. Deterministic rules handle the known variants fast and transparently, semantic search catches the long tail, and every row comes back with an explainable result, in its original order.</p>
+    <div class="stack">
+      <span class="tag">Python</span><span class="tag">pandas</span><span class="tag">Regular expressions</span><span class="tag">Sentence-BERT</span><span class="tag">FAISS</span><span class="tag">pytest</span><span class="tag">GitHub Actions</span><span class="tag">PyPI</span>
+    </div>
+    <div class="stats">
+      <div class="stat"><b>95</b><span>standard taxonomy categories</span></div>
+      <div class="stat"><b>3,989</b><span>regex patterns for variants &amp; typos</span></div>
+      <div class="stat"><b>4,195</b><span>curated exact matches</span></div>
+      <div class="stat"><b>52</b><span>automated tests, Python 3.9–3.13</span></div>
+    </div>
+    <div class="cta">
+      <a class="btn primary" href="#architecture">Explore the pipeline ↓</a>
+      <a class="btn" href="https://pypi.org/project/jobtitletransformer/" target="_blank" rel="noopener">View on PyPI ↗</a>
+      <a class="btn" href="https://github.com/PrasannaDataBus/JobTitleTransformer" target="_blank" rel="noopener">View code on GitHub ↗</a>
+    </div>
+  </div>
+</header>
+
+<main>
+<section id="architecture">
+  <div class="wrap">
+    <h2>Interactive pipeline</h2>
+    <p class="sub">Click any stage to see what it does, the decision behind it, and jump straight to its code.</p>
+    <div class="legend"><span class="hint">↳ Every box is clickable</span></div>
+
+    <div class="arch jarch" role="group" aria-label="Pipeline architecture">
+      <div class="col">
+        <div class="col-label">Input</div>
+        <button class="node tall" data-id="input"><span class="t">Raw titles</span><span class="d">DataFrame, Series or list</span><span class="cfg">Dermatologue<br>dermatogist<br>Cirujano Plastico<br>RN</span></button>
+      </div>
+      <div class="conn" aria-hidden="true"><span>→</span></div>
+      <div class="col">
+        <div class="col-label">Preprocess</div>
+        <button class="node tall" data-id="pre"><span class="t">Preprocessing</span><span class="d">HTML entities · Unicode → ASCII · whitespace · placeholders flagged</span></button>
+      </div>
+      <div class="conn" aria-hidden="true"><span>→</span></div>
+      <div class="col">
+        <div class="col-label">Deterministic rules engine</div>
+        <div class="tfbox">
+          <div class="row2">
+            <button class="node" data-id="modules"><span class="t">95 category modules</span><span class="d">Fixed execution order</span></button>
+            <button class="node" data-id="regex"><span class="t">3,989 regex patterns</span><span class="d">Variants, typos, languages</span></button>
+            <button class="node" data-id="exact"><span class="t">4,195 exact matches</span><span class="d">Curated real-world values</span></button>
+            <button class="node" data-id="excl"><span class="t">2,319 exclusions</span><span class="d">Guards against false matches</span></button>
+          </div>
+        </div>
+      </div>
+      <div class="conn" aria-hidden="true"><span>→</span></div>
+      <div class="col">
+        <div class="col-label">Semantic fallback</div>
+        <div class="gcpbox">
+          <button class="node" data-id="sbert"><span class="t">SBERT embeddings</span><span class="d">all-MiniLM-L6-v2</span></button>
+          <button class="node" data-id="faiss"><span class="t">FAISS search</span><span class="d">Nearest category</span></button>
+        </div>
+      </div>
+      <div class="conn" aria-hidden="true"><span>→</span></div>
+      <div class="col">
+        <div class="col-label">Review &amp; gates</div>
+        <div class="stackv">
+          <button class="node rev" data-id="review" style="flex:1"><span class="t">Optional review</span><span class="d">Confirm ML matches</span></button>
+          <button class="node gate" data-id="gate" style="flex:1"><span class="t">Integrity gates</span><span class="d">Same rows, same order</span></button>
+        </div>
+      </div>
+    </div>
+
+    <div class="orch jarch">
+      <div class="col-label lab">Output</div>
+      <button class="node" data-id="output" style="grid-column:3 / 10"><span class="t">Explainable output</span><span class="d">normalized_title + match_method (rules · semantic · placeholder · unmatched) · input untouched · row order and index preserved</span></button>
+    </div>
+
+    <div class="col-label" style="margin-top:30px">Engineering &amp; distribution</div>
+    <div class="row3 eng">
+      <button class="node" data-id="pypi"><span class="t">Published on PyPI</span><span class="d">pip install jobtitletransformer · v0.3.0</span></button>
+      <button class="node" data-id="ci"><span class="t">CI on Python 3.9–3.13</span><span class="d">GitHub Actions on every pull request</span></button>
+      <button class="node" data-id="tests"><span class="t">52 automated tests</span><span class="d">Rules, API, FAISS search, row safety</span></button>
+    </div>
+
+    <div class="panel" id="panel" aria-live="polite">
+      <div class="ph">👆 Select a stage above to see what it does, the decision behind it, and a link to its code.</div>
+    </div>
+  </div>
+</section>
+
+<section id="examples">
+  <div class="wrap">
+    <h2>See it in action</h2>
+    <p class="sub">Real outputs from <code>jtt.normalize()</code>, taken from the automated test suite and a live run.</p>
+    <div class="ex">
+      <div class="exh"><span>job_title</span><span>normalized_title</span><span>match_method</span></div>
+      <div class="exr"><code>Dermatologue</code><b>Dermatologist</b><span>rules · French</span></div>
+      <div class="exr"><code>dermatologista</code><b>Dermatologist</b><span>rules · Portuguese</span></div>
+      <div class="exr"><code>Cirujano Plastico</code><b>Plastic Surgeon</b><span>rules · Spanish</span></div>
+      <div class="exr"><code>Médecin Esthétique</code><b>Aesthetic Physician</b><span>rules · accents</span></div>
+      <div class="exr"><code>dermatogist</code><b>Dermatologist</b><span>rules · typo</span></div>
+      <div class="exr"><code>Plastic &amp;amp; Reconstructive Surgeon</code><b>Plastic and Reconstructive Surgeon</b><span>rules · HTML entity</span></div>
+      <div class="exr"><code>RN</code><b>Registered Nurse (RN)</b><span>rules · abbreviation</span></div>
+      <div class="exr"><code>Longevity Doctor</code><b>Anti-aging Physician</b><span>semantic · distance 0.49</span></div>
+      <div class="exr"><code>Other</code><b><i>None</i></b><span>placeholder</span></div>
+    </div>
+  </div>
+</section>
+
+<section id="decisions">
+  <div class="wrap">
+    <h2>Key engineering decisions</h2>
+    <p class="sub">The choices that make the pipeline accurate, explainable and safe to run on production data.</p>
+    <div class="cards">
+      <div class="card"><div class="n">01</div><h3>Rules first, ML second</h3><p>Known variants are resolved by deterministic rules: fast, repeatable and explainable. Machine learning only handles what the rules have never seen.</p></div>
+      <div class="card"><div class="n">02</div><h3>Variants, exact matches, exclusions</h3><p>Each category combines broad regex variants, a curated exact-match list and explicit exclusions, so recall stays high without false positives.</p></div>
+      <div class="card"><div class="n">03</div><h3>Built from real-world data</h3><p>Thousands of real spellings, abbreviations and translations across English, French, Spanish, Portuguese, Turkish, Indonesian and more.</p></div>
+      <div class="card"><div class="n">04</div><h3>Clean before you match</h3><p>HTML entities, accents and stray whitespace are normalised first, so every rule sees consistent text and one pattern covers many encodings.</p></div>
+      <div class="card"><div class="n">05</div><h3>Semantic search for the long tail</h3><p>Unmatched titles are embedded with Sentence-BERT and matched to the nearest taxonomy label with FAISS, in batches for large datasets.</p></div>
+      <div class="card"><div class="n">06</div><h3>ML results are always visible</h3><p>Every ML match is flagged as <code>semantic</code> with its distance, an optional threshold rejects weak matches, and <code>review="interactive"</code> asks for confirmation first.</p></div>
+      <div class="card"><div class="n">07</div><h3>Integrity by design</h3><p>Every input row is tracked end to end. The output always has the same rows, in the same order, with the same index, or an <code>IntegrityError</code> is raised.</p></div>
+      <div class="card"><div class="n">08</div><h3>Shipped like a real library</h3><p>Versioned on PyPI with a changelog, 52 tests on Python 3.9–3.13, and every release through a pull request with CI checks.</p></div>
+    </div>
+  </div>
+</section>
+
+<section id="quickstart">
+  <div class="wrap">
+    <h2>Quickstart</h2>
+    <p class="sub">Works with any DataFrame and column name, a Series, a list, or a single title.</p>
+<pre class="codeblock"><code>pip install jobtitletransformer
+
+import pandas as pd
+import JobTitleTransformer as jtt
+
+jtt.normalize_title("Dermatologue")          # 'Dermatologist'
+
+contacts = pd.read_csv("contacts.csv")
+clean, report = jtt.normalize(contacts, column="job_title", return_report=True)
+print(report)                                # rules / semantic / placeholder / unmatched</code></pre>
+    <p class="note">Use <code>semantic=False</code> for a fast, fully deterministic run, <code>semantic_threshold=0.8</code> to reject weak ML matches, or <code>review="interactive"</code> to confirm them.</p>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap row">
+    <span>© 2026 Prasanna Uthamaraj. MIT licensed.</span>
+    <span><a href="https://github.com/PrasannaDataBus" target="_blank" rel="noopener">github.com/PrasannaDataBus</a> · <a href="https://www.linkedin.com/in/dataguyprasanna/" target="_blank" rel="noopener">LinkedIn</a></span>
+  </div>
+</footer>
+
+<script>
+const R = 'https://github.com/PrasannaDataBus/JobTitleTransformer/';
+const T = R + 'tree/HEAD/', B = R + 'blob/HEAD/';
+const S = B + 'JobTitleTransformer/job_scripts/';
+const DATA = {
+  input:{k:'Input',t:'Raw job titles',
+    what:['A DataFrame (any column name), a Series, a list, or a single title','Typical sources: registration forms, CRMs and contact databases','Spelling mistakes, abbreviations, other languages and HTML-encoded characters are all expected'],
+    why:'Real-world titles are messy. The pipeline is designed for that reality instead of assuming clean input.',
+    links:[['Pipeline entry point',B+'JobTitleTransformer/runner.py']]},
+  pre:{k:'Preprocess',t:'Preprocessing',
+    what:['Decodes HTML entities such as &amp;amp; and &amp;eacute;','Converts accented characters to ASCII with unidecode','Normalises whitespace and strips leading codes','Flags placeholders such as "Other", "-" or bare numbers as match_method = placeholder','Keeps the untouched value in original_speciality'],
+    why:'Every rule then sees consistent text, so one pattern covers many encodings and the original value is never lost.',
+    links:[['Preprocessing script',S+'_encode_decode.py']]},
+  modules:{k:'Rules engine',t:'95 category modules',
+    what:['One module per standard category, from Acupuncturist to Vascular Surgeon','Executed in a fixed, explicit order','Each module reports what it matched and how many rows changed'],
+    why:'Small, focused modules make the taxonomy easy to extend and every change easy to review.',
+    links:[['All modules',T+'JobTitleTransformer/job_scripts'],['Execution order',B+'JobTitleTransformer/runner.py']]},
+  regex:{k:'Rules engine',t:'3,989 regex patterns',
+    what:['Case-insensitive patterns for spellings, typos and translations','Examples: Dermatologue, Dermatologista, Dermatoloji, Dermatogist','Combined into one expression per category for vectorised matching'],
+    why:'Patterns generalise beyond the exact strings seen so far, so new variants are often caught automatically.',
+    links:[['Example module',S+'Dermatologist.py']]},
+  exact:{k:'Rules engine',t:'4,195 exact matches',
+    what:['Curated values that patterns alone would miss or over-match','Covers compound titles such as "Dermatology &amp; Aesthetic Medicine"','Matched by set membership, which is instant even on large data'],
+    why:'Exact matches give precise control over tricky real-world values without widening the regex patterns.',
+    links:[['Example module',S+'Dermatologist.py']]},
+  excl:{k:'Rules engine',t:'2,319 exclusions',
+    what:['Values that look like a category but must not be mapped to it','Applied after variants and exact matches in every module'],
+    why:'Exclusions keep precision high: broad patterns can stay broad without creating false positives.',
+    links:[['Example module',S+'Dermatologist.py']]},
+  sbert:{k:'Semantic fallback',t:'Sentence-BERT embeddings',
+    what:['Runs only on titles the rules did not match','Encodes the standard taxonomy labels and the unmatched titles with all-MiniLM-L6-v2','Processes titles in batches to handle large datasets'],
+    why:'Semantic similarity understands meaning, not just spelling, so it can place titles the rules have never seen.',
+    links:[['Transformation Hub',S+'TransformationHub.py']]},
+  faiss:{k:'Semantic fallback',t:'FAISS vector search',
+    what:['Builds an IndexFlatL2 index of taxonomy label embeddings','Finds the nearest category for each unmatched title','Optional semantic_threshold rejects matches that are too far away'],
+    why:'FAISS keeps the nearest-neighbour search fast and simple, even as the number of unmatched titles grows.',
+    links:[['Semantic stage',S+'TransformationHub.py']]},
+  review:{k:'Review & gates',t:'Optional human review',
+    what:['Every ML match is flagged as semantic, with its distance in the report','review="interactive" prints each mapping as original → label with counts','A "no" raises ReviewRejectedError instead of returning results'],
+    why:'Probabilistic matches never reach production silently: they are always visible, and can be confirmed by a person.',
+    links:[['Review step',S+'TransformationHub.py']]},
+  gate:{k:'Review & gates',t:'Integrity gates',
+    what:['Every input row is tracked with an internal ID from start to finish','Checks run after the rules and before returning the result','Any mismatch raises IntegrityError instead of returning partial data'],
+    why:'Downstream systems can trust that every input record comes back once, in its original position.',
+    links:[['Integrity checks',S+'TransformationHub.py']]},
+  output:{k:'Output',t:'Explainable output',
+    what:['normalized_title: one of 100 standard taxonomy labels','match_method: rules, semantic, placeholder or unmatched','The input is never modified; row order and index are preserved','Optional report with counts, semantic matches and unmatched titles'],
+    why:'Consistent categories make segmentation, reporting and analytics reliable across sources and countries.',
+    links:[['Public API',B+'JobTitleTransformer/api.py'],['README',R+'#readme']]},
+  pypi:{k:'Distribution',t:'Published on PyPI',
+    what:['pip install jobtitletransformer','Latest release v0.3.0, supporting Python 3.9–3.13','Changelog and GitHub release notes for every version'],
+    why:'Teams install a versioned, reproducible package instead of copying scripts between projects.',
+    links:[['PyPI page','https://pypi.org/project/jobtitletransformer/'],['Package config',B+'setup.py']]},
+  ci:{k:'Engineering',t:'Continuous integration',
+    what:['GitHub Actions runs on every pull request and every push to master','Tests on Python 3.9, 3.10, 3.11, 3.12 and 3.13','A separate job builds the package and validates its metadata'],
+    why:'Problems are caught before a release reaches users, not after.',
+    links:[['CI workflow',B+'.github/workflows/ci.yml']]},
+  tests:{k:'Engineering',t:'Automated tests',
+    what:['52 tests: mappings, typos, multilingual variants and HTML entities','Public API: output shape, row order, review modes, threshold and errors','Real FAISS search path, integrity gates and packaging checks'],
+    why:'Every change to the taxonomy is verified automatically, so improvements never break existing mappings.',
+    links:[['Test suite',T+'tests'],['API tests',B+'tests/test_api.py']]}
+};
+const panel = document.getElementById('panel');
+const nodes = document.querySelectorAll('.node');
+function esc(s){return s.replace(/&(?!amp;)/g,'&amp;').replace(/</g,'&lt;')}
+function show(id){
+  const d = DATA[id]; if(!d) return;
+  nodes.forEach(n=>n.setAttribute('aria-pressed', n.dataset.id===id ? 'true':'false'));
+  const links = d.links.map(([l,u])=>`<a class="btn primary" href="${u}" target="_blank" rel="noopener">${esc(l)} ↗</a>`).join('');
+  panel.innerHTML = `<div class="kicker">${esc(d.k)}</div><h3>${esc(d.t)}</h3>
+    <div class="cols"><ul>${d.what.map(w=>`<li>${esc(w)}</li>`).join('')}</ul>
+    <div class="why"><b>Why it matters</b>${esc(d.why)}</div></div>
+    <div class="links">${links}</div>`;
+  panel.scrollIntoView({behavior: matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth', block:'nearest'});
+}
+nodes.forEach(n=>{ n.setAttribute('aria-pressed','false'); n.addEventListener('click',()=>show(n.dataset.id)); });
+</script>
+</body>
+</html>
